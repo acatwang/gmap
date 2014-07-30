@@ -218,9 +218,18 @@
             savedRoute[checkedRoute]['steps'] = googleLatlng;
             savedRoute[checkedRoute]['tripinfo'] = tripinfo;
             //savedRoute[checkedRoute]['startPoint'] = startPoint;
-          });// End of loadJSON    
-        }; //End of saveSelRoute
 
+          console.log("added route - Indide?");
+          console.log(savedRoute);
+
+          });// End of loadJSON    
+
+          console.log("added route - Outside?");
+          console.log(savedRoute);
+
+
+        }; //End of saveSelRoute
+          
         function rmSelRoute(uncheckedRoute){
           delete savedRoute[uncheckedRoute];
           
