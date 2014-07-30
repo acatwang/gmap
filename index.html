@@ -74,23 +74,26 @@
 
     <script type="text/javascript"> /* Google map setting */
       function initialize() {
-        var savedRoute ={};
-
+      
         var mapOptions = {
             center: new google.maps.LatLng(42.518, -83.644),
             zoom: 10
-          };
+        };
 
         var map = new google.maps.Map(document.getElementById("map-canvas"),
-                mapOptions);
+                      mapOptions);
 
-        /* Read gps data from a JSON file */
         
+        /* Read gps data from a JSON file */
+        var data={};
+        var savedRoute ={};
         function loadJSON(filepath){
           return $.getJSON(filepath).done(function(data){
              return data.items;
           })
-        }
+        };
+
+       
 
         var gps38 = "https://dl.dropboxusercontent.com/u/6964160/gps38route.json";
         var tripids = [];
@@ -133,10 +136,7 @@
 
             infowindow.open(map,startMarker);
 
-            google.maps.event.addListener(startMarker, 'click', function() {
-              moveTheCar(pathMarker,savedRoute[t]['steps'],0);
-            });
-
+           
             
 
           }; // each route 
@@ -145,10 +145,10 @@
 
         
 
-        function showSelinfo(checkedRoute, show){
+        function showSelinfo(checkedRoute){
 
           loadJSON(gps38).done(function(obj){
-
+            data = obj;
             console.log(obj);
             console.log(typeof(checkedRoute));
             //tripids = Object.keys(obj); // return Keys in an object
@@ -173,7 +173,9 @@
             var tripinfo = checkedRoute + ": "+obj[checkedRoute]['startDate']+", " + obj[checkedRoute]['startTime'];
             console.log(tripinfo);
 
-         
+            
+
+            /*          
             var startMarker = new google.maps.Marker({
               position: new google.maps.LatLng(startPoint['lat'],startPoint['lon']),
               map: map,
@@ -190,15 +192,37 @@
             google.maps.event.addListener(startMarker, 'click', function() {
               moveTheCar(pathMarker,googleLatlng,0);
             });
-            
+            */
             //drawRoute(googleLatlng);               
            
-           
+         
           }); // End of loadJSON
         }; // End of showSelectedRoute
 
+        /* Moving Car */
+
+        var carMarker = new google.maps.Marker({
+          position: new google.maps.LatLng(42.313797, -83.211242), // park at Ford headquarter
+          map: map,
+          icon: 'src/img/car-icon.png'
+        });
+
+        function moveTheCar(myMarker, myRoute,i){
+
+          if(i < myRoute.length){
+            myMarker.setPosition(myRoute[i]);
+           
+            window.setTimeout(function(){
+              moveTheCar(myMarker,myRoute,i+1);
+            },10);
+          } 
+        }// End of moveThecar 
 
 
+        var paths = {};
+        var polys = {};
+        var startMarkers ={};
+        var openedwindow;
         function addSelRoute(checkedRoute){          
           loadJSON(gps38).done(function(obj){
             var googleLatlng = [];  
@@ -219,19 +243,59 @@
             savedRoute[checkedRoute]['tripinfo'] = tripinfo;
             //savedRoute[checkedRoute]['startPoint'] = startPoint;
 
-          console.log("added route - Indide?");
-          console.log(savedRoute);
+            var startMarker = new google.maps.Marker({
+              position: googleLatlng[0],
+              map: map,
+
+            });
+
+
+            var infowindow =  new google.maps.InfoWindow({
+              content: tripinfo
+            });
+
+            infowindow.open(map,startMarker);
+
+            
+            var poly = new google.maps.Polyline({
+              path: googleLatlng,
+              geodesic: true,
+              strokeColor: '#01296E',
+              strokeOpacity: 1.0,
+              strokeWeight: 2,
+              map: map,
+      
+            }); 
+
+
+            paths[checkedRoute] = googleLatlng;
+            startMarkers[checkedRoute] = startMarker;
+            polys[checkedRoute] = poly;
+            openedwindow = (infowindow);
+
+            console.log("added route - Inside?");
+            console.log(savedRoute);
+            console.log(paths);
+
+             google.maps.event.addListener(startMarker, 'click', function() {
+              moveTheCar(carMarker,googleLatlng,0);
+              infowindow.open(map,startMarker);
+             });
+          
+
 
           });// End of loadJSON    
 
-          console.log("added route - Outside?");
+          console.log("added route - outside?");
           console.log(savedRoute);
 
-
         }; //End of saveSelRoute
-          
+
+
         function rmSelRoute(uncheckedRoute){
           delete savedRoute[uncheckedRoute];
+          paths[uncheckedRoute].setMap(null);
+          startMarkers[uncheckedRoute].setMap(null);
           
         };
 
@@ -255,11 +319,12 @@
             if (view.checked) {
               console.log("what I clicked");
               console.log(view.value);
-              addSelRoute(view.value);
+
               console.log("what's saved 2");
               console.log(savedRoute);
-              drawRoute();
 
+              addSelRoute(view.value);
+              openedwindow.close();
               
               //showSelinfo(view.value);
               } 
@@ -271,7 +336,6 @@
             //showSelectedRoute(view.value);
             console.log("what's saved 1");
             console.log(savedRoute);
-            drawRoute();
             
 
 
@@ -288,39 +352,7 @@
             //showSelectedRoute(checkedRoute);
          });
 
-        /* Add infowindow when the marker is clicked       
-        var infowindow =  new google.maps.InfoWindow({
-          content: "470: 2014/4/1 18:04:12"
-        });
- */   
-        /*
-        var startMarker = new google.maps.Marker({
-          position:gpsdict[0],
-          map: map,
-          title: "Start Here"
-        });
-        infowindow.open(map,startMarker);
-        */
-
-        /* Static path 
-        var route = new google.maps.Polyline({
-          path: gpsdict,
-          geodesic: true,
-          strokeColor: '#000000',
-          strokeOpacity: 1.0,
-          strokeWeight: 2,
-          map: map
-        });
-        */
-
-        /* Animated path 
-        var pathMarker = new google.maps.Marker({
-          position: gpsdict[0],
-          map: map,
-          icon: 'src/img/car-icon.png'
-        });
-
-*/
+        
 
 
         /* Add search box */
@@ -421,21 +453,13 @@
 
         */
 
-        function moveTheCar(myMarker, myRoute,i){
-
-          if(i < myRoute.length){
-            myMarker.setPosition(myRoute[i]);
-           
-            window.setTimeout(function(){
-              moveTheCar(myMarker,myRoute,i+1);
-            },10);
-          } 
-        }// End of moveThecar 
+        
 
 
     } /* End of initilaize */
 
       google.maps.event.addDomListener(window, 'load', initialize);
+
 
     </script>
 
