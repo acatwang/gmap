@@ -93,7 +93,10 @@
           })
         };
 
-       var gps38 = "https://dl.dropboxusercontent.com/u/6964160/gps38route.json";
+       var gps38 = "https://dl.dropboxusercontent.com/u/6964160/gps38AllRoute.json";
+
+        var vid_tripid = {};
+               vid_tripid['38'] = [465, 466, 468, 469, 470, 471, 472, 473, 474, 475, 476, 477, 478, 480, 481, 482, 484, 485, 486, 487, 488, 489, 490, 491, 492, 493, 494, 495, 496, 497, 498, 499, 500, 501, 502, 503, 504, 505, 506, 507, 509, 510, 511, 513, 514, 515, 516, 518, 519, 520, 521, 522, 523, 524, 525, 526, 528, 529, 530, 531, 532, 533, 534, 538, 539, 540, 541, 542, 543, 544, 545, 546, 547, 548, 549, 550];
         
         /* Moving Car */
 
@@ -123,6 +126,7 @@
         var colors;
         function addSelRoute(checkedRoute){          
           loadJSON(gps38).done(function(obj){
+            console.log(obj);
             var googleLatlng = [];  
             // Convert into google map latLng
             for (var i=0, point; point = obj[checkedRoute]['steps'][i]; i++ ){
@@ -231,10 +235,6 @@
         /* Selected VID 
         /* jQuery template: http://wenzhixin.net.cn/p/multiple-select/docs 
         */
-
-        console.log("before I click");
-        console.log(savedRoute);
-
         $("select").multipleSelect({
           
           filter: true,
@@ -246,11 +246,8 @@
             // TODO: fet VID by tripid?????
             
             if (view.checked) {
-              console.log("what I clicked");
-              console.log(view.value);
 
-              console.log("what's saved 2");
-              console.log(savedRoute);
+              console.log(view.value);
 
               addSelRoute(view.value);
               openedwindow.close();
@@ -274,6 +271,10 @@
               var values = $.map(view.children, function(child){
                   return child.value;
               }).join(', ');
+
+              for (var i=0; i<vid_tripid['38'].length; i++){
+                  addSelRoute(vid_tripid['38'][i]);
+              };
           }
 
 
@@ -411,6 +412,14 @@
           <legend> Select interested route</legend>
           <select multiple="multiple">
             <optgroup label="VID:38">
+              <script language="javascript">
+               var vid_tripid = {};
+               vid_tripid['38'] = [465, 466, 468, 469, 470, 471, 472, 473, 474, 475, 476, 477, 478, 480, 481, 482, 484, 485, 486, 487, 488, 489, 490, 491, 492, 493, 494, 495, 496, 497, 498, 499, 500, 501, 502, 503, 504, 505, 506, 507, 509, 510, 511, 513, 514, 515, 516, 518, 519, 520, 521, 522, 523, 524, 525, 526, 528, 529, 530, 531, 532, 533, 534, 538, 539, 540, 541, 542, 543, 544, 545, 546, 547, 548, 549, 550];
+
+                for (var i=0; i<vid_tripid['38'].length; i++){
+                  document.write("\<option value=\""+vid_tripid['38'][i]+"\"\>" + vid_tripid['38'][i] + "\<\/option\>" );
+                };
+              </script>
               <option value="465">465</option>
               <option value="466">466</option>
               <option value="468">468</option>
