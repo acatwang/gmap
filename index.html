@@ -98,15 +98,30 @@
 
 
         function drawRoute(){
-          console.log("run drawRoute");
           console.log("what's pass to drawRoute");
           console.log(savedRoute);
-          
-          var path;
+
+          var polyOptions = {
+            strokeColor: '#01296E',
+            strokeOpacity: 1.0,
+            strokeWeight: 2,
+            map: map
+          };
+
+          poly = new google.maps.Polyline(polyOptions);
+          var path = [];
+
           for (var t in savedRoute){
-            //trip = savedRoute[i];
+            console.log("drawROute loop");
+            var trip = savedRoute[t];
             console.log(t);
-            console.log(savedRoute[t]);     
+            console.log(trip);     
+            console.log("run drawRoute");
+
+            console.log(trip['steps']);
+            console.log(trip.steps);
+           
+/*
 
             path = new google.maps.Polyline({
               path: savedRoute[t]['steps'],
@@ -118,6 +133,7 @@
               title: savedRoute[t]['tripid']
       
             }); 
+*/
 
             /*
 
@@ -248,8 +264,8 @@
             
             if (view.checked) {
               saveSelRoute(view.value);
-              drawRoute();
-              showSelinfo(view.value);
+              
+              //showSelinfo(view.value);
               } 
             else{
               rmSelRoute(view.value);
@@ -259,7 +275,7 @@
             //showSelectedRoute(view.value);
             console.log("what's saved");
             console.log(savedRoute);
-            
+            drawRoute();
             
 
 
