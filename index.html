@@ -116,49 +116,6 @@
 
 
 
-        /* Color generator */
-        function randHex() {
-          return (Math.floor(Math.random() * 56) + 200).toString(16);
-        }
-
-        function randColor() {
-          return randHex() + "" + randHex() + "" + randHex();
-        }
-        function genColorPair(){
-          //Generate a pair of light/dark color
-        
-          var lightColor = randColor();
-
-
-          // Darkent the color
-
-          var amt = -50;
-          var num = parseInt(lightColor,16);
-          var r = (num >> 16) + amt;
-
-          if (r > 255) r = 255;
-          else if  (r < 0) r = 0;
- 
-          var b = ((num >> 8) & 0x00FF) + amt;
- 
-          if (b > 255) b = 255;
-          else if  (b < 0) b = 0;
-       
-          var g = (num & 0x0000FF) + amt;
-       
-          if (g > 255) g = 255;
-          else if (g < 0) g = 0;
-
-
-          var darkColor = "#" + (g | (b << 8) | (r << 16)).toString(16);
-
-          lightColor = "#" + lightColor;
-
-          return [lightColor, darkColor];    
-        }
-
-
-
         var paths = {};
         var polys = {};
         var startMarkers ={};
@@ -195,7 +152,21 @@
             });
 
             infowindow.open(map,startMarker);
-            
+
+            var desIcon = {
+                path: 'M -2,-2 2,2 M 2,-2 -2,2',
+                strokeColor: '#292',
+                strokeWeight: 4
+            };
+
+            var endMarker = new google.maps.Marker({
+              position: googleLatlng[googleLatlng.length-1],
+              map: map,
+              icon:"src/img/finish.png"
+
+            });
+
+           
             
             var poly = new google.maps.Polyline({
               path: googleLatlng,
@@ -215,6 +186,12 @@
             //change color here when mouse over
               poly.setOptions({strokeOpacity: 0.5,
                                 strokeWeight: 3})               
+            });
+
+            google.maps.event.addListener(poly, 'click', function() {
+              moveTheCar(carMarker,googleLatlng,0);
+              infowindow.open(map,startMarker);
+     
             });
 
 
@@ -269,7 +246,6 @@
             // TODO: fet VID by tripid?????
             
             if (view.checked) {
-              colors = genColorPair();
               console.log("what I clicked");
               console.log(view.value);
 
