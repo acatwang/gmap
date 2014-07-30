@@ -95,27 +95,17 @@
         var gps38 = "https://dl.dropboxusercontent.com/u/6964160/gps38route.json";
         var tripids = [];
 
-        var poly;
+
+
         function drawRoute(){
           console.log("what's pass to drawRoute");
           console.log(savedRoute);
-
-          var polyOptions = {
-            strokeColor: '#01296E',
-            strokeOpacity: 1.0,
-            strokeWeight: 2,
-          };       
-
-          poly = new google.maps.Polyline(polyOptions);
-          poly.setMap(map);
-
-          var path = [];
 
           for (var t in savedRoute){
             console.log("drawROute loop");
             var trip = savedRoute[t];
 
-/*
+
 
             path = new google.maps.Polyline({
               path: savedRoute[t]['steps'],
@@ -127,9 +117,9 @@
               title: savedRoute[t]['tripid']
       
             }); 
-*/
 
-            /*
+
+  
 
             var startMarker = new google.maps.Marker({
               position: savedRoute[t]['steps'][0],
@@ -146,7 +136,7 @@
             google.maps.event.addListener(startMarker, 'click', function() {
               moveTheCar(pathMarker,savedRoute[t]['steps'],0);
             });
-            */
+
             
 
           }; // each route 
@@ -228,8 +218,6 @@
             savedRoute[checkedRoute]['steps'] = googleLatlng;
             savedRoute[checkedRoute]['tripinfo'] = tripinfo;
             //savedRoute[checkedRoute]['startPoint'] = startPoint;
-
-
           });// End of loadJSON    
         }; //End of saveSelRoute
 
@@ -261,7 +249,7 @@
               addSelRoute(view.value);
               console.log("what's saved 2");
               console.log(savedRoute);
-
+              drawRoute();
 
               
               //showSelinfo(view.value);
