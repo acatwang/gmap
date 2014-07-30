@@ -93,112 +93,8 @@
           })
         };
 
-       
-
-        var gps38 = "https://dl.dropboxusercontent.com/u/6964160/gps38route.json";
-        var tripids = [];
-
-
-
-        function drawRoute(){
-          console.log("what's pass to drawRoute");
-          console.log(savedRoute);
-
-          for (var t in savedRoute){
-            console.log("drawROute loop");
-            var trip = savedRoute[t];
-
-
-
-            path = new google.maps.Polyline({
-              path: savedRoute[t]['steps'],
-              geodesic: true,
-              strokeColor: '#01296E',
-              strokeOpacity: 1.0,
-              strokeWeight: 2,
-              map: map,
-              title: savedRoute[t]['tripid']
-      
-            }); 
-
-
-  
-
-            var startMarker = new google.maps.Marker({
-              position: savedRoute[t]['steps'][0],
-              map: map,
-
-            });
-
-            var infowindow =  new google.maps.InfoWindow({
-              content: savedRoute[t]['tripid']
-            });
-
-            infowindow.open(map,startMarker);
-
-           
-            
-
-          }; // each route 
-
-        };//End of drawRoute
-
+       var gps38 = "https://dl.dropboxusercontent.com/u/6964160/gps38route.json";
         
-
-        function showSelinfo(checkedRoute){
-
-          loadJSON(gps38).done(function(obj){
-            data = obj;
-            console.log(obj);
-            console.log(typeof(checkedRoute));
-            //tripids = Object.keys(obj); // return Keys in an object
-            //Convert points into Google LatLng format
-
-            //for (var r=0; r <selectedRoute.length; r++){
-            //  var tripid = selectedRoute[r]; 
-            //  console.log(tripid);
-
-            
-            var googleLatlng = [];
-           
-            for (var i=0, point; point = obj[checkedRoute]['steps'][i]; i++ ){
-              if (i < obj[checkedRoute]['steps'].length){
-                var latLng = new google.maps.LatLng(point['lat'],point['lon']);
-                googleLatlng.push(latLng);              
-              }
-            }; // End of forloop for one tripid
-            
-
-            var startPoint = obj[checkedRoute]['steps'][0];
-            var tripinfo = checkedRoute + ": "+obj[checkedRoute]['startDate']+", " + obj[checkedRoute]['startTime'];
-            console.log(tripinfo);
-
-            
-
-            /*          
-            var startMarker = new google.maps.Marker({
-              position: new google.maps.LatLng(startPoint['lat'],startPoint['lon']),
-              map: map,
-
-            });
-
-            var infowindow =  new google.maps.InfoWindow({
-              content: tripinfo
-              });
-            infowindow.open(map,startMarker);
-            
-
-            
-            google.maps.event.addListener(startMarker, 'click', function() {
-              moveTheCar(pathMarker,googleLatlng,0);
-            });
-            */
-            //drawRoute(googleLatlng);               
-           
-         
-          }); // End of loadJSON
-        }; // End of showSelectedRoute
-
         /* Moving Car */
 
         var carMarker = new google.maps.Marker({
@@ -219,10 +115,55 @@
         }// End of moveThecar 
 
 
+
+        /* Color generator */
+        function randHex() {
+          return (Math.floor(Math.random() * 56) + 200).toString(16);
+        }
+
+        function randColor() {
+          return randHex() + "" + randHex() + "" + randHex();
+        }
+        function genColorPair(){
+          //Generate a pair of light/dark color
+        
+          var lightColor = randColor();
+
+
+          // Darkent the color
+
+          var amt = -50;
+          var num = parseInt(lightColor,16);
+          var r = (num >> 16) + amt;
+
+          if (r > 255) r = 255;
+          else if  (r < 0) r = 0;
+ 
+          var b = ((num >> 8) & 0x00FF) + amt;
+ 
+          if (b > 255) b = 255;
+          else if  (b < 0) b = 0;
+       
+          var g = (num & 0x0000FF) + amt;
+       
+          if (g > 255) g = 255;
+          else if (g < 0) g = 0;
+
+
+          var darkColor = "#" + (g | (b << 8) | (r << 16)).toString(16);
+
+          lightColor = "#" + lightColor;
+
+          return [lightColor, darkColor];    
+        }
+
+
+
         var paths = {};
         var polys = {};
         var startMarkers ={};
         var openedwindow;
+        var colors;
         function addSelRoute(checkedRoute){          
           loadJSON(gps38).done(function(obj){
             var googleLatlng = [];  
@@ -249,23 +190,32 @@
 
             });
 
-
             var infowindow =  new google.maps.InfoWindow({
               content: tripinfo
             });
 
             infowindow.open(map,startMarker);
-
+            
             
             var poly = new google.maps.Polyline({
               path: googleLatlng,
               geodesic: true,
-              strokeColor: '#01296E',
-              strokeOpacity: 1.0,
-              strokeWeight: 2,
-              map: map,
-      
+              strokeColor: '#'+(0x1000000+(Math.random())*0xffffff).toString(16).substr(1,6),
+              strokeOpacity: 0.7,
+              strokeWeight: 3,
+              map: map,      
             }); 
+
+            google.maps.event.addListener(poly, 'mouseover', function() {
+            //change color here when mouse over
+              poly.setOptions({strokeOpacity:1, strokeWeight: 5})               
+            });
+
+            google.maps.event.addListener(poly, 'mouseout', function() {
+            //change color here when mouse over
+              poly.setOptions({strokeOpacity: 0.5,
+                                strokeWeight: 3})               
+            });
 
 
             paths[checkedRoute] = googleLatlng;
@@ -282,6 +232,8 @@
               infowindow.open(map,startMarker);
              });
           
+
+         
 
 
           });// End of loadJSON    
@@ -317,6 +269,7 @@
             // TODO: fet VID by tripid?????
             
             if (view.checked) {
+              colors = genColorPair();
               console.log("what I clicked");
               console.log(view.value);
 
@@ -345,7 +298,6 @@
               var values = $.map(view.children, function(child){
                   return child.value;
               }).join(', ');
-              //checkedRoute['tripids'] = values;
           }
 
 
