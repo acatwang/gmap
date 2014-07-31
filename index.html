@@ -75,6 +75,7 @@
     <script type="text/javascript"> /* Google map setting */
       function initialize() {
       
+        geocoder = new google.maps.Geocoder();
         var mapOptions = {
             center: new google.maps.LatLng(42.518, -83.644),
             zoom: 10
@@ -185,7 +186,37 @@
              });
           
 
-         
+            /* return location? */
+            geocoder.geocode({'latLng': googleLatlng[googleLatlng.length-1]},function(results, status) {
+              if (status == google.maps.GeocoderStatus.OK) {
+                 if (results[0]) {
+                   map.setZoom(11);
+
+                   if(results[0].address_components[0].long_name.match(/\b\D/)){
+                     var placeinfo =  new google.maps.InfoWindow({
+                      //content: results[1].formatted_address
+                      //content: results[0].formatted_address
+                      content: results[0].address_components[0].long_name
+                     });
+                     placeinfo.open(map, endMarker);
+                  } else{
+                    var placeinfo =  new google.maps.InfoWindow({
+                      //content: results[1].formatted_address
+                      content: results[0].formatted_address
+                     
+                     });
+                    placeinfo.open(map, endMarker);
+
+
+                   console.log( results[0]);
+                  }
+                  
+                 } else{
+                   alert('result 1'+ results[1]);
+                 }
+              }
+
+            }) // end of geocode
 
 
           });// End of loadJSON    
@@ -204,6 +235,11 @@
         function addSelVID(checkedVID){
 
           var tripids = vid_tripid[checkedVID];
+
+          var top_left_X = 42.5;
+          var top_left_Y = -83;
+          var down_right_X = 42.5;
+          var down_right_Y = -83;
           
           loadJSON(gps38).done(function(obj){
             for (var r=0; r < tripids.length; r++){
@@ -213,6 +249,7 @@
               
               for (var i=0, point; point = obj[tripid]['steps'][i]; i++ ){
                 if (i < obj[tripid]['steps'].length){
+
                   var latLng = new google.maps.LatLng(point['lat'],point['lon']);
                   googleLatlng.push(latLng);              
                 }; 
@@ -233,13 +270,10 @@
 
               paths_vid.push(path);
 
-
-
-
-
             }// Loop thru all routes within a VID
 
           }) //End of loadJSON
+
         }; // End of addSelVID
 
 
@@ -258,7 +292,6 @@
           if(route[0]){
             var startPoint = new google.maps.LatLng(route[0].k,route[0].B);
             var endPoint = new google.maps.LatLng(route[route.length-1].k, route[route.length-1].B);
-            console.log(endPoint);
           }
           
           if(startPoint){
@@ -292,6 +325,7 @@
               car.setMap(map);
 
               moveTheCar(car,route,0);
+              console.log(endPoint);
            });
           
 
