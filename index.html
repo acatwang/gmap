@@ -83,8 +83,9 @@
         var map = new google.maps.Map(document.getElementById("map-canvas"),
                       mapOptions);
 
-        
-        /* Read gps data from a JSON file */
+        /* Data preparation
+        * Read gps data from a JSON file 
+        */
         var data={};
         var savedRoute ={};
         function loadJSON(filepath){
@@ -98,6 +99,8 @@
         var vid_tripid = {};
                vid_tripid['38'] = [465, 466, 468, 469, 470, 471, 472, 473, 474, 475, 476, 477, 478, 480, 481, 482, 484, 485, 486, 487, 488, 489, 490, 491, 492, 493, 494, 495, 496, 497, 498, 499, 500, 501, 502, 503, 504, 505, 506, 507, 509, 510, 511, 513, 514, 515, 516, 518, 519, 520, 521, 522, 523, 524, 525, 526, 528, 529, 530, 531, 532, 533, 534, 538, 539, 540, 541, 542, 543, 544, 545, 546, 547, 548, 549, 550];
         
+        
+
         /* Moving Car */
 
         var carMarker = new google.maps.Marker({
@@ -124,6 +127,7 @@
         var startMarkers ={};
         var openedwindow;
         var colors;
+
         function addSelRoute(checkedRoute){          
           loadJSON(gps38).done(function(obj){
             console.log(obj);
@@ -145,11 +149,21 @@
             savedRoute[checkedRoute]['tripinfo'] = tripinfo;
             //savedRoute[checkedRoute]['startPoint'] = startPoint;
 
+
+            /*
             var startMarker = new google.maps.Marker({
               position: googleLatlng[0],
               map: map,
 
             });
+            */
+
+            var startMarker = setMarker(googleLatlng[0]);
+            startMarker.setMap(map);
+
+            var endMarker = setMarker(googleLatlng[googleLatlng.length-1], "finish");
+            endMarker.setMap(map);
+  
 
             var infowindow =  new google.maps.InfoWindow({
               content: tripinfo
@@ -157,18 +171,14 @@
 
             infowindow.open(map,startMarker);
 
-            var desIcon = {
-                path: 'M -2,-2 2,2 M 2,-2 -2,2',
-                strokeColor: '#292',
-                strokeWeight: 4
-            };
-
+            /*
             var endMarker = new google.maps.Marker({
               position: googleLatlng[googleLatlng.length-1],
               map: map,
               icon:"src/img/finish.png"
 
             });
+*/
 
            
             
@@ -219,9 +229,7 @@
 
           });// End of loadJSON    
 
-          console.log("added route - outside?");
-          console.log(savedRoute);
-
+    
         }; //End of saveSelRoute
 
 
@@ -232,7 +240,124 @@
           
         };
 
-        /* Selected VID 
+
+        function addSelVID(checkedVID){
+
+          var tripids = vid_tripid[checkedVID];
+          var paths_vid = [];
+          loadJSON(gps38).done(function(obj){
+            for (var r=0; r < tripids.length; r++){
+              // Create google map latLng for each route(trip)
+              var tripid = tripids[r];
+              var googleLatlng = [];  
+              
+              for (var i=0, point; point = obj[tripid]['steps'][i]; i++ ){
+                if (i < obj[tripid]['steps'].length){
+                  var latLng = new google.maps.LatLng(point['lat'],point['lon']);
+                  googleLatlng.push(latLng);              
+                }; 
+              };// Loop thru all steps within a route
+
+
+              var path = new google.maps.Polyline({
+                path: googleLatlng,
+                geodesic: true,
+                strokeColor: '#'+(0x1000000+(Math.random())*0xffffff).toString(16).substr(1,6),
+                strokeOpacity: 0.7,
+                strokeWeight: 3,
+                map: map,      
+              }); 
+
+
+
+              paths_vid.push(new myPathClass(path))
+
+
+
+
+
+            }// Loop thru all routes within a VID
+
+          }) //End of loadJSON
+
+          
+        } // End of addSelVID
+
+
+
+
+        function myPathClass(polyline){
+          this.polyline = polyline;  // ???
+
+          var route = polyline.getPath().j;
+
+          if(route[0]){
+            var startPoint = new google.maps.LatLng(route[0].k,route[0].B);
+            var endPoint = new google.maps.LatLng(route[route.length-1].k, route[route.length-1].B);
+            console.log(endPoint);
+          }
+          
+          if(startPoint){
+             var startMark = setMarker(startPoint);
+          }
+
+          if(endPoint){
+            var endMark = setMarker(endPoint, "finish");
+          }
+
+          
+
+          /*
+          var start = new google.maps.Marker({
+               position: new google.maps.Marker(Number(route[0].k), Number(route[0].B)),
+               title: "Start"
+          });
+          */
+          
+          //console.log(start);
+
+          //var startPoint = route[0];
+
+          google.maps.event.addListener(polyline, 'mouseover', function() {
+            polyline.setOptions( { strokeOpacity : 1,
+                                   strokeWeight: 5 } );
+            startMark.setMap(map);
+            endMark.setMap(map);
+
+          });
+
+          google.maps.event.addListener(polyline, 'mouseout', function() {
+            polyline.setOptions( { strokeOpacity : 0.7,
+                                  strokeWeight: 3 } );
+
+            startMark.setMap(null);
+            endMark.setMap(null);
+
+            });
+
+            //start.setMap(null);
+
+        }; // End of myPathClass
+
+
+        function setMarker(point, type){
+          var marker = new google.maps.Marker({
+              position: point,
+          });
+
+          switch(type){
+            case 'finish':
+              marker.setIcon('src/img/finish.png');
+              break;
+
+
+          }
+
+          return marker;
+        }
+
+
+        /* Selected VID and/or route
         /* jQuery template: http://wenzhixin.net.cn/p/multiple-select/docs 
         */
         $("select").multipleSelect({
@@ -272,9 +397,16 @@
                   return child.value;
               }).join(', ');
 
-              for (var i=0; i<vid_tripid['38'].length; i++){
-                  addSelRoute(vid_tripid['38'][i]);
-              };
+              //console.log(values);
+              //console.log(view);
+
+              
+              console.log(typeof(view.label));
+              var vid = view.label.substring(5,view.label.length);
+              //var vid = label
+              
+              addSelVID(vid);
+
           }
 
 
