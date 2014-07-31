@@ -125,6 +125,7 @@
         var startMarkers_r ={};
         var endMarkers_r ={};
         var openedwindow;
+        var opendedPlaceInfo;
         var colors;
 
         function addSelRoute(checkedRoute){          
@@ -199,6 +200,7 @@
                       content: results[0].address_components[0].long_name
                      });
                      placeinfo.open(map, endMarker);
+                     opendedPlaceInfo = placeinfo;
                   } else{
                     var placeinfo =  new google.maps.InfoWindow({
                       //content: results[1].formatted_address
@@ -206,6 +208,7 @@
                      
                      });
                     placeinfo.open(map, endMarker);
+                    opendedPlaceInfo = placeinfo;
 
 
                    console.log( results[0]);
@@ -374,7 +377,8 @@
 
               addSelRoute(view.value);
               openedwindow.close();
-              
+              opendedPlaceInfo.close();
+
               //showSelinfo(view.value);
               } 
             else{
