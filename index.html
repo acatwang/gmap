@@ -99,15 +99,12 @@
         var vid_tripid = {};
                vid_tripid['38'] = [465, 466, 468, 469, 470, 471, 472, 473, 474, 475, 476, 477, 478, 480, 481, 482, 484, 485, 486, 487, 488, 489, 490, 491, 492, 493, 494, 495, 496, 497, 498, 499, 500, 501, 502, 503, 504, 505, 506, 507, 509, 510, 511, 513, 514, 515, 516, 518, 519, 520, 521, 522, 523, 524, 525, 526, 528, 529, 530, 531, 532, 533, 534, 538, 539, 540, 541, 542, 543, 544, 545, 546, 547, 548, 549, 550];
         
-        
+
+        var vid_cartype ={};
+        vid_cartype['38'] = "explorer";
+
 
         /* Moving Car */
-
-        var carMarker = new google.maps.Marker({
-          position: new google.maps.LatLng(42.313797, -83.211242), // park at Ford headquarter
-          map: map,
-          icon: 'src/img/car-icon.png'
-        });
 
         function moveTheCar(myMarker, myRoute,i){
 
@@ -124,7 +121,8 @@
 
         var paths = {};
         var polys = {};
-        var startMarkers ={};
+        var startMarkers_r ={};
+        var endMarkers_r ={};
         var openedwindow;
         var colors;
 
@@ -143,26 +141,15 @@
             startPoint = obj[checkedRoute]['steps'][0];
             var tripinfo = (checkedRoute + ": " + obj[checkedRoute]['startDate'] + ", " + obj[checkedRoute]['startTime'] ); 
 
-            savedRoute[checkedRoute] = {};
-            savedRoute[checkedRoute]['tripid'] = checkedRoute;
-            savedRoute[checkedRoute]['steps'] = googleLatlng;
-            savedRoute[checkedRoute]['tripinfo'] = tripinfo;
-            //savedRoute[checkedRoute]['startPoint'] = startPoint;
-
-
-            /*
-            var startMarker = new google.maps.Marker({
-              position: googleLatlng[0],
-              map: map,
-
-            });
-            */
 
             var startMarker = setMarker(googleLatlng[0]);
             startMarker.setMap(map);
+            startMarkers_r[checkedRoute] = startMarker;
+
 
             var endMarker = setMarker(googleLatlng[googleLatlng.length-1], "finish");
             endMarker.setMap(map);
+            endMarkers_r[checkedRoute] = endMarker;
   
 
             var infowindow =  new google.maps.InfoWindow({
@@ -171,16 +158,7 @@
 
             infowindow.open(map,startMarker);
 
-            /*
-            var endMarker = new google.maps.Marker({
-              position: googleLatlng[googleLatlng.length-1],
-              map: map,
-              icon:"src/img/finish.png"
-
-            });
-*/
-
-           
+         
             
             var poly = new google.maps.Polyline({
               path: googleLatlng,
@@ -191,32 +169,15 @@
               map: map,      
             }); 
 
-            google.maps.event.addListener(poly, 'mouseover', function() {
-            //change color here when mouse over
-              poly.setOptions({strokeOpacity:1, strokeWeight: 5})               
-            });
-
-            google.maps.event.addListener(poly, 'mouseout', function() {
-            //change color here when mouse over
-              poly.setOptions({strokeOpacity: 0.5,
-                                strokeWeight: 3})               
-            });
-
-            google.maps.event.addListener(poly, 'click', function() {
-              moveTheCar(carMarker,googleLatlng,0);
-              infowindow.open(map,startMarker);
-     
-            });
-
-
-            paths[checkedRoute] = googleLatlng;
-            startMarkers[checkedRoute] = startMarker;
+            myPathClass(poly, 'explorer'); // ???how to get vehicle type
+            
             polys[checkedRoute] = poly;
+            
+            paths[checkedRoute] = googleLatlng;
+            
+
             openedwindow = (infowindow);
 
-            console.log("added route - Inside?");
-            console.log(savedRoute);
-            console.log(paths);
 
              google.maps.event.addListener(startMarker, 'click', function() {
               moveTheCar(carMarker,googleLatlng,0);
@@ -234,17 +195,16 @@
 
 
         function rmSelRoute(uncheckedRoute){
-          delete savedRoute[uncheckedRoute];
           polys[uncheckedRoute].setMap(null);
-          startMarkers[uncheckedRoute].setMap(null);
-          
+          startMarkers_r[uncheckedRoute].setMap(null);
+          endMarkers_r[uncheckedRoute].setMap(null);
         };
 
-
+        var paths_vid = [];
         function addSelVID(checkedVID){
 
           var tripids = vid_tripid[checkedVID];
-          var paths_vid = [];
+          
           loadJSON(gps38).done(function(obj){
             for (var r=0; r < tripids.length; r++){
               // Create google map latLng for each route(trip)
@@ -268,9 +228,10 @@
                 map: map,      
               }); 
 
+              myPathClass(path, vid_cartype[checkedVID]);
 
 
-              paths_vid.push(new myPathClass(path))
+              paths_vid.push(path);
 
 
 
@@ -279,14 +240,17 @@
             }// Loop thru all routes within a VID
 
           }) //End of loadJSON
-
-          
-        } // End of addSelVID
+        }; // End of addSelVID
 
 
+        function rmSelVID(uncheckedVID){
+          for (var i=0; i < paths_vid.length; i++){
+            paths_vid[i].setMap(null);
+          }
+        }
 
 
-        function myPathClass(polyline){
+        function myPathClass(polyline, cartype){
           this.polyline = polyline;  // ???
 
           var route = polyline.getPath().j;
@@ -305,18 +269,6 @@
             var endMark = setMarker(endPoint, "finish");
           }
 
-          
-
-          /*
-          var start = new google.maps.Marker({
-               position: new google.maps.Marker(Number(route[0].k), Number(route[0].B)),
-               title: "Start"
-          });
-          */
-          
-          //console.log(start);
-
-          //var startPoint = route[0];
 
           google.maps.event.addListener(polyline, 'mouseover', function() {
             polyline.setOptions( { strokeOpacity : 1,
@@ -333,9 +285,15 @@
             startMark.setMap(null);
             endMark.setMap(null);
 
-            });
+          });
 
-            //start.setMap(null);
+           google.maps.event.addListener(polyline, 'click', function() {
+              var car = setMarker(startPoint,cartype);
+              car.setMap(map);
+
+              moveTheCar(car,route,0);
+           });
+          
 
         }; // End of myPathClass
 
@@ -346,10 +304,14 @@
           });
 
           switch(type){
+
             case 'finish':
               marker.setIcon('src/img/finish.png');
               break;
 
+            case 'explorer':
+              marker.setIcon('src/img/explorer_icon.png');
+              break;
 
           }
 
@@ -366,6 +328,8 @@
           multiple: true,
           width: '100%',
           placeholder: "Select VID and route",
+          selectAll: false,
+          multipleWidth: 50,
 
           onClick: function(view){
             // TODO: fet VID by tripid?????
@@ -385,35 +349,43 @@
 
             //console.log((view.value));
             //showSelectedRoute(view.value);
-            console.log("what's saved 1");
-            console.log(savedRoute);
-            
+
 
 
           }, // End of onClick
 
-          onOptgroupClick: function(view) {
-              var values = $.map(view.children, function(child){
-                  return child.value;
-              }).join(', ');
-
-              //console.log(values);
-              //console.log(view);
-
-              
+          onOptgroupClick: function(view) {     
               console.log(typeof(view.label));
+
               var vid = view.label.substring(5,view.label.length);
-              //var vid = label
               
-              addSelVID(vid);
+              if(view.checked) {
+                addSelVID(vid); }
+              else{
+                rmSelVID(vid);
+              };
 
-          }
-
-
+          } // End of onOptgroupclick
             //showSelectedRoute(checkedRoute);
-         });
 
-        
+
+         }); // End of multiselect event
+
+        $("#uncheckAllBtn").click(function(){
+
+          for (var i=0; i < paths_vid.length; i++){
+            paths_vid[i].setMap(null);
+          };
+
+          for (var k in polys){
+            polys[k].setMap(null);
+            startMarkers_r[k].setMap(null);
+            endMarkers_r[k].setMap(null);
+          };
+
+          $("select").multipleSelect("uncheckAll");
+
+        });
 
 
         /* Add search box */
@@ -527,7 +499,7 @@
   </head>
 
   <body>
-      <input id="pac-input" class="controls" type="text" placeholder="Search Box">
+    <input id="pac-input" class="controls" type="text" placeholder="Search Box">
 
    <div id="map-canvas"></div>
     <div class="container-fluid" id="main">
@@ -552,14 +524,12 @@
                   document.write("\<option value=\""+vid_tripid['38'][i]+"\"\>" + vid_tripid['38'][i] + "\<\/option\>" );
                 };
               </script>
-              <option value="465">465</option>
-              <option value="466">466</option>
-              <option value="468">468</option>
-              <option value="469">469</option>
-              <option value="470">470</option>
+             
             <optgroup label="VID:53">
           </select>
 
+          <br>
+          <button id="uncheckAllBtn" class="btn btn-default pull-right"><span class="glyphicon glyphicon-remove"></span>Clear All</button>
 
        </div>
       </div> <!-- End of row -->
