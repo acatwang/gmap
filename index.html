@@ -96,27 +96,30 @@
         };
 
        var gps38 = "https://dl.dropboxusercontent.com/u/6964160/gps38AllRoute.json";
+       var allroute = "https://dl.dropboxusercontent.com/u/6964160/allRoute.json";
 
         var vid_tripid = {};
                vid_tripid['38'] = [465, 466, 468, 469, 470, 471, 472, 473, 474, 475, 476, 477, 478, 480, 481, 482, 484, 485, 486, 487, 488, 489, 490, 491, 492, 493, 494, 495, 496, 497, 498, 499, 500, 501, 502, 503, 504, 505, 506, 507, 509, 510, 511, 513, 514, 515, 516, 518, 519, 520, 521, 522, 523, 524, 525, 526, 528, 529, 530, 531, 532, 533, 534, 538, 539, 540, 541, 542, 543, 544, 545, 546, 547, 548, 549, 550];
         
+              vid_tripid['53'] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 20, 21, 22, 23, 24, 25, 26, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 42, 43, 44, 45, 46, 47, 48, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 61, 62, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 98, 99, 100, 101, 102, 103, 104, 106, 107, 108, 109, 110, 111, 112, 113, 114, 117, 118, 119, 120, 123, 124, 125, 126, 127, 128, 130, 131, 132, 133];
 
         var vid_cartype ={};
         vid_cartype['38'] = "explorer";
+        vid_cartype['53'] = "fusion";
 
 
         /* Moving Car */
 
         function moveTheCar(myMarker, myRoute,i){
-
-          if(i < myRoute.length){
-            myMarker.setPosition(myRoute[i]);
-           
+          if(i < myRoute.length){           
+            myMarker.setPosition(myRoute[i]);           
             window.setTimeout(function(){
               moveTheCar(myMarker,myRoute,i+1);
             },10);
           } 
-        }// End of moveThecar 
+
+
+        };// End of moveThecar 
 
 
 
@@ -129,8 +132,7 @@
         var colors;
 
         function addSelRoute(checkedRoute){          
-          loadJSON(gps38).done(function(obj){
-            console.log(obj);
+          loadJSON(allroute).done(function(obj){
             var googleLatlng = [];  
             // Convert into google map latLng
             for (var i=0, point; point = obj[checkedRoute]['steps'][i]; i++ ){
@@ -160,6 +162,8 @@
 
             infowindow.open(map,startMarker);
 
+            //map.panToBounds(googleLatlng[0], googleLatlng[googleLatlng.length-1]);
+
          
             
             var poly = new google.maps.Polyline({
@@ -182,7 +186,7 @@
 
 
              google.maps.event.addListener(startMarker, 'click', function() {
-              moveTheCar(carMarker,googleLatlng,0);
+              //moveTheCar(carMarker,googleLatlng,0);
               infowindow.open(map,startMarker);
              });
           
@@ -222,9 +226,7 @@
             }) // end of geocode
 
 
-          });// End of loadJSON    
-
-    
+          });// End of loadJSON        
         }; //End of saveSelRoute
 
 
@@ -244,7 +246,7 @@
           var down_right_X = 42.5;
           var down_right_Y = -83;
           
-          loadJSON(gps38).done(function(obj){
+          loadJSON(allroute).done(function(obj){
             for (var r=0; r < tripids.length; r++){
               // Create google map latLng for each route(trip)
               var tripid = tripids[r];
@@ -258,6 +260,7 @@
                 }; 
               };// Loop thru all steps within a route
 
+              var tripinfo = (tripid + ": " + obj[tripid]['startDate'] + ", " + obj[tripid]['startTime'] ); 
 
               var path = new google.maps.Polyline({
                 path: googleLatlng,
@@ -268,7 +271,7 @@
                 map: map,      
               }); 
 
-              myPathClass(path, vid_cartype[checkedVID]);
+              myPathClass(path, vid_cartype[checkedVID], tripinfo);
 
 
               paths_vid.push(path);
@@ -287,7 +290,7 @@
         }
 
 
-        function myPathClass(polyline, cartype){
+        function myPathClass(polyline, cartype, tripinfo){
           this.polyline = polyline;  // ???
 
           var route = polyline.getPath().j;
@@ -305,12 +308,20 @@
             var endMark = setMarker(endPoint, "finish");
           }
 
+          if(tripinfo){
+            var tripInfoWindow = new google.maps.InfoWindow({
+              content: tripinfo
+            });
+          }
+
 
           google.maps.event.addListener(polyline, 'mouseover', function() {
             polyline.setOptions( { strokeOpacity : 1,
                                    strokeWeight: 5 } );
             startMark.setMap(map);
             endMark.setMap(map);
+            caldistance(route);
+            tripInfoWindow.open(map, startMark);
 
           });
 
@@ -321,9 +332,18 @@
             startMark.setMap(null);
             endMark.setMap(null);
 
+            if(targetMarkers.length > 0) {
+
+              for (var i=0; i < targetMarkers.length; i ++){
+                targetMarkers[i].setMap(null);
+              }
+            };
+
           });
 
            google.maps.event.addListener(polyline, 'click', function() {
+              startMark.setMap(map);
+              endMark.setMap(map);
               var car = setMarker(startPoint,cartype);
               car.setMap(map);
 
@@ -348,6 +368,14 @@
 
             case 'explorer':
               marker.setIcon('src/img/explorer_icon.png');
+              break;
+
+            case 'fusion':
+              marker.setIcon('src/img/fusion_icon.png');
+              break;
+
+            case 'select':
+              marker.setIcon('src/img/select.png');
               break;
 
           }
@@ -422,8 +450,17 @@
           };
 
           $("select").multipleSelect("uncheckAll");
-
         });
+
+        $(":checkbox").change(function(){
+          if(this.checked){
+            addSelVID($(this).val());
+            console.log($(this).val());
+          }
+          else{
+            rmSelVID($(this).val());
+          }
+        })
 
 
         /* Add search box */
@@ -433,14 +470,16 @@
         
         var searchBox = new google.maps.places.SearchBox(/** @type {HTMLInputElement} */(input));
 
+        var placelist = [];
+
         // [START region_getplaces]
         // Listen for the event fired when the user selects an item from the
         // pick list. Retrieve the matching places for that item.
-       
-
+       var placeMarkers = [];
         google.maps.event.addListener(searchBox, 'places_changed', function() {
+          
           var places = searchBox.getPlaces();   // an object
-          var placeMarkers = [];
+          //var placeMarkers = [];
 
 
           if (places.length == 0) {
@@ -453,9 +492,11 @@
 
           // For each place, get the icon, place name, and location.
 
-          placeMarkers = [];
+          
           var bounds = new google.maps.LatLngBounds();
           for (var i = 0, place; place = places[i]; i++) {
+            placelist.push(place);
+
             var image = {
                           url: place.icon,
                           size: new google.maps.Size(71, 71),
@@ -475,12 +516,104 @@
             placeMarkers.push(marker);
 
             bounds.extend(place.geometry.location);
+            //console.log(place);
+            //console.log(place.geometry.location);
+
           }; // End of for loop
 
+          caldistance();
+
           map.fitBounds(bounds);
+
         }); /* End of region_getplaces*/
 
 
+        targetMarkers = [];
+        function caldistance(potentialRoute){
+          var radius = 800; // meters
+
+          var closePlacesId = [];
+          var closeStepId = [];
+          
+          var closestID = [];
+          var closestDistToRoute =[];
+          
+          if (placelist.length > 0){
+            for (var j=0; j<placelist.length; j++){
+              var distances = [];
+              var closest = -1;             
+              
+              var directDist = 0;
+              for (var i=0; i <potentialRoute.length; i++){ 
+
+                var dist =  google.maps.geometry.spherical.computeDistanceBetween(potentialRoute[i], placelist[j].geometry.location);  // return meter
+                distances[i] = dist;
+
+                if (directDist == 0 || dist < directDist ){
+                  directDist = dist;
+                }
+
+                /*
+                // Find the closest distance between every store and routes
+                if (closest == -1 || dist < distances[closest] ){
+                  closest = i;
+                };
+                */
+             
+              }; // loop thru points in a route
+
+              //closestID.push(closest);
+              //closestDistToRoute.push(distances[closest]);
+              console.log(j);
+              console.log(directDist);
+              closestDistToRoute.push(directDist);
+            
+            }; // loop thru places in placelist
+
+            for (var i=0; i < closestDistToRoute.length; i++){
+              if(closestDistToRoute[i] < radius ){
+                console.log(closestDistToRoute[i]);
+                closePlacesId.push(i);
+              }
+
+            };
+
+
+            if (closePlacesId.length > 0){
+              for (var p =0; p < closePlacesId.length; p++){
+                var id = closePlacesId[p];
+                var closetTarget = setMarker(placelist[id].geometry.location, 'select');
+                targetMarkers.push(closetTarget);
+                var targetInfo = "<p>" + placelist[id].name + "</p>" +
+                              "<p> Distance: " + Math.round(closestDistToRoute[id] * 100) / 100 + "</p>"; // rounded to two decimal
+
+                var targetWindow = new google.maps.InfoWindow({
+                  content: targetInfo
+                });
+                closetTarget.setMap(map);
+                targetWindow.open(map, closetTarget);
+              }
+            };
+
+            /*
+            var theClosest = closestDist.indexOf(Math.min.apply(Math, closestDist));
+
+            console.log(theClosest);
+
+            var closetTarget = setMarker(placelist[theClosest].geometry.location);
+            var targetInfo = "<p>" + placelist[theClosest].name + "</p>" +
+                              "<p> Distance: " + Math.round(closestDist[theClosest] * 100) / 100 + "</p>"; // rounded to two decimal
+
+            var targetWindow = new google.maps.InfoWindow({
+               content: targetInfo
+            });
+            closetTarget.setMap(map);
+            targetWindow.open(map, closetTarget);
+
+            */
+          };
+
+        }; // End of caldistance
 
         // Bias the SearchBox results towards places that are within the bounds of the
         // current map's viewport.
@@ -550,9 +683,24 @@
           <br>
 
           
+          <legend> Select VID </legend>
+          <label class="checkbox-inline">
+            <input type="checkbox" id="inlineCheckbox1" value="38"> 38
+          </label>
+          <label class="checkbox-inline">
+            <input type="checkbox" id="inlineCheckbox2" value="53"> 53
+          </label>
+          <label class="checkbox-inline">
+            <input type="checkbox" id="inlineCheckbox3" value="89"> 89
+          </label>
+          <br>
+          <br>
+
+
            <!-- Use jQery template -->
-          <legend> Select interested route</legend>
+          <legend> Select route</legend>
           <select multiple="multiple">
+
             <optgroup label="VID:38">
               <script language="javascript">
                var vid_tripid = {};
@@ -564,9 +712,23 @@
               </script>
              
             <optgroup label="VID:53">
+              <script>
+
+                var vid_tripid ={}; 
+                  vid_tripid['53'] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 20, 21, 22, 23, 24, 25, 26, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 42, 43, 44, 45, 46, 47, 48, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 61, 62, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 98, 99, 100, 101, 102, 103, 104, 106, 107, 108, 109, 110, 111, 112, 113, 114, 117, 118, 119, 120, 123, 124, 125, 126, 127, 128, 130, 131, 132, 133];
+
+                for (var i=0; i<vid_tripid['53'].length; i++){
+                    document.write("\<option value=\""+vid_tripid['53'][i]+"\"\>" + vid_tripid['53'][i] + "\<\/option\>" );
+                };
+              </script>
+
+
+
           </select>
 
           <br>
+          <br>
+
           <button id="uncheckAllBtn" class="btn btn-default pull-right"><span class="glyphicon glyphicon-remove"></span>Clear All</button>
 
        </div>
