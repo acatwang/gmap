@@ -71,6 +71,8 @@
     <script type="text/javascript"
       src="https://maps.googleapis.com/maps/api/js?v=3.exp&key=AIzaSyAp1w_hIM2WIqXnf0j0Dk4hGBfgZHsIdKA&libraries=places,geometry">
     </script>
+    <script src="src/markerclusterer.js" type="text/javascript"></script>
+
 
     <script type="text/javascript"> /* Google map setting */
       function initialize() {
@@ -83,6 +85,13 @@
 
         var map = new google.maps.Map(document.getElementById("map-canvas"),
                       mapOptions);
+
+
+        // For Marker Cluster
+        var mcOptions = { gridSize: 80, maxZoom: 15};
+        var mc;
+        
+
 
         /* Data preparation
         * Read gps data from a JSON file 
@@ -130,6 +139,7 @@
         var openedwindow;
         var opendedPlaceInfo;
         var colors;
+        var allMarkers = [];
 
         function addSelRoute(checkedRoute){          
           loadJSON(allroute).done(function(obj){
@@ -149,11 +159,13 @@
             var startMarker = setMarker(googleLatlng[0]);
             startMarker.setMap(map);
             startMarkers_r[checkedRoute] = startMarker;
+            allMarkers.push(startMarker);
 
 
             var endMarker = setMarker(googleLatlng[googleLatlng.length-1], "finish");
             endMarker.setMap(map);
             endMarkers_r[checkedRoute] = endMarker;
+            allMarkers.push(endMarker);
   
 
             var infowindow =  new google.maps.InfoWindow({
@@ -226,7 +238,12 @@
             }) // end of geocode
 
 
-          });// End of loadJSON        
+          });// End of loadJSON     
+
+          // Cluster markers
+              
+              var mc = new MarkerClusterer(map, allMarkers, mcOptions);   
+
         }; //End of saveSelRoute
 
 
@@ -234,6 +251,7 @@
           polys[uncheckedRoute].setMap(null);
           startMarkers_r[uncheckedRoute].setMap(null);
           endMarkers_r[uncheckedRoute].setMap(null);
+          allMarkers = [];
         };
 
         var paths_vid = [];
@@ -276,9 +294,24 @@
 
               paths_vid.push(path);
 
+              var start_v = setMarker(googleLatlng[0])
+              var end_v = setMarker(googleLatlng[googleLatlng.length-1])
+              //start_v.setMap(map);
+              //end_v.setMap(map);
+              allMarkers.push(start_v);
+              allMarkers.push(end_v);
+
+
             }// Loop thru all routes within a VID
 
+            mc = new MarkerClusterer(map, allMarkers, mcOptions);
+          console.log(allMarkers);
+
           }) //End of loadJSON
+
+          // Cluster markers
+         
+         
 
         }; // End of addSelVID
 
@@ -287,6 +320,8 @@
           for (var i=0; i < paths_vid.length; i++){
             paths_vid[i].setMap(null);
           }
+          allMarkers = [];
+          mc.clearMarkers();
         }
 
 
@@ -350,8 +385,6 @@
               moveTheCar(car,route,0);
               console.log(endPoint);
            });
-          
-
         }; // End of myPathClass
 
 
@@ -404,8 +437,11 @@
               console.log(view.value);
 
               addSelRoute(view.value);
+             
               openedwindow.close();
               opendedPlaceInfo.close();
+
+              
 
               //showSelinfo(view.value);
               } 
@@ -426,7 +462,9 @@
               var vid = view.label.substring(5,view.label.length);
               
               if(view.checked) {
-                addSelVID(vid); }
+                addSelVID(vid);
+              }
+
               else{
                 rmSelVID(vid);
               };
@@ -459,6 +497,7 @@
           }
           else{
             rmSelVID($(this).val());
+
           }
         })
 
@@ -621,42 +660,6 @@
           var bounds = map.getBounds();
           searchBox.setBounds(bounds);
         });
-
-
-
-
-
-        /* animated function w/ time out */
-        
-        /* Calculate distance between current loactio and searched place */
-        /*
-        Object.size = function(obj) {
-          var size = 0, key;
-          for (key in obj) {
-            if (obj.hasOwnProperty(key)) size++;
-          }
-          return size;
-        };
-
-
-        function closestPlaces(i,placelist,radius){
-          var closePlaces = [];
-          var size = Object.size(placelist);
-
-          for (var p=0; p < size; p++){
-            var dist = google.maps.geometry.spherical.computeDistanceBetween(i,places[p]);
-            console.log(dist);
-
-            if  (dist < radius){
-              closePlaces.push(placelist[p]);
-            }
-          }
-
-          return closePlaces;
-        }
-
-        */
-
         
 
 
@@ -693,7 +696,7 @@
           <label class="checkbox-inline">
             <input type="checkbox" id="inlineCheckbox2" value="53"> 53
           </label>
-          <label class="checkbox-inline">
+          <label class="checkbox-inline disabled">
             <input type="checkbox" id="inlineCheckbox3" value="89"> 89
           </label>
           <br>
