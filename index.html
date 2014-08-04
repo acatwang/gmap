@@ -126,10 +126,7 @@
               moveTheCar(myMarker,myRoute,i+1);
             },10);
           } 
-
-
         };// End of moveThecar 
-
 
 
         var paths = {};
@@ -242,9 +239,9 @@
 
           // Cluster markers
               
-              var mc = new MarkerClusterer(map, allMarkers, mcOptions);   
-
+          mc = new MarkerClusterer(map, allMarkers, mcOptions);   
         }; //End of saveSelRoute
+
 
 
         function rmSelRoute(uncheckedRoute){
@@ -258,11 +255,6 @@
         function addSelVID(checkedVID){
 
           var tripids = vid_tripid[checkedVID];
-
-          var top_left_X = 42.5;
-          var top_left_Y = -83;
-          var down_right_X = 42.5;
-          var down_right_Y = -83;
           
           loadJSON(allroute).done(function(obj){
             for (var r=0; r < tripids.length; r++){
@@ -296,23 +288,19 @@
 
               var start_v = setMarker(googleLatlng[0])
               var end_v = setMarker(googleLatlng[googleLatlng.length-1])
-              //start_v.setMap(map);
-              //end_v.setMap(map);
+              
               allMarkers.push(start_v);
               allMarkers.push(end_v);
 
 
             }// Loop thru all routes within a VID
 
+
+            // Cluster markers
             mc = new MarkerClusterer(map, allMarkers, mcOptions);
-          console.log(allMarkers);
+            console.log(allMarkers);
 
           }) //End of loadJSON
-
-          // Cluster markers
-         
-         
-
         }; // End of addSelVID
 
 
@@ -323,6 +311,43 @@
           allMarkers = [];
           mc.clearMarkers();
         }
+
+        function getGeoInfo(geoLatlng, theMarker){
+          var geoString = "";
+          console.log("getting GEO info");
+          //var geoInfo;
+          geocoder.geocode({'latLng': geoLatlng}, function(results, status){
+             if(status == google.maps.GeocoderStatus.OK) {
+              console.log("Geocoder status is OK");
+              if(results[0]) {
+                console.log("Got result");
+                if(isNaN(Number(results[0].address_components[0].long_name[0]))){
+                  console.log("isNAN");
+                  var placeinfoWin =  new google.maps.InfoWindow({
+                      content: results[0].address_components[0].long_name
+                   });
+                   placeinfoWin.open(map, theMarker);
+                   opendedPlaceInfo = placeinfoWin;
+                  //console.log(results[0].address_components[0].long_name);
+                } else{
+                  var placeinfoWin = google.maps.InfoWindow({
+                    content: results[0].formatted_address
+                  });
+                   placeinfoWin.open(map, theMarker);
+                  opendedPlaceInfo = placeinfoWin;
+
+
+                  console.log(typeof(results[0].formatted_address));
+                }
+
+              }
+             } // Check status
+
+          })
+
+          
+
+        }// End of getGeoInfo
 
 
         function myPathClass(polyline, cartype, tripinfo){
@@ -341,7 +366,10 @@
 
           if(endPoint){
             var endMark = setMarker(endPoint, "finish");
-          }
+
+           console.log(endPoint);                           
+          
+          };
 
           if(tripinfo){
             var tripInfoWindow = new google.maps.InfoWindow({
@@ -358,6 +386,33 @@
             caldistance(route);
             tripInfoWindow.open(map, startMark);
 
+            // show geo info            
+            
+             geocoder.geocode({'latLng': endPoint}, function(results, status){
+             if(status == google.maps.GeocoderStatus.OK) {
+              console.log("Geocoder status is OK");
+              if(results[0]) {
+                console.log("Got result");
+                console.log(results[0]);
+                
+                  var placeinfoWin = new google.maps.InfoWindow({
+                    content: results[0].formatted_address
+                  })
+                  
+                   placeinfoWin.open(map, endMark);
+                  opendedPlaceInfo = placeinfoWin;
+
+
+                  console.log(typeof(results[0].formatted_address));
+                }
+
+              }
+             
+
+            }) // End of Geocoder
+
+          
+
           });
 
           google.maps.event.addListener(polyline, 'mouseout', function() {
@@ -366,6 +421,8 @@
 
             startMark.setMap(null);
             endMark.setMap(null);
+
+            opendedPlaceInfo.close();
 
             if(targetMarkers.length > 0) {
 
@@ -383,7 +440,6 @@
               car.setMap(map);
 
               moveTheCar(car,route,0);
-              console.log(endPoint);
            });
         }; // End of myPathClass
 
